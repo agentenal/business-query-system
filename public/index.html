@@ -28,7 +28,7 @@
             const [showCaptcha, setShowCaptcha] = useState(false);
 
             useEffect(() => {
-                axios.get('https://business-query-worker.26935955.workers.dev//api/history')
+                axios.get('https://business-query-worker.26935955.workers.dev/api/history')
                     .then(res => setHistory(res.data))
                     .catch(err => setError('加载历史记录失败'));
             }, []);
@@ -42,7 +42,7 @@
                 setError('');
                 try {
                     const companies = query.split('\n').filter(name => name.trim());
-                    const response = await axios.post('https://business-query-worker.26935955.workers.dev//api/query', { companies, captcha });
+                    const response = await axios.post('https://business-query-worker.26935955.workers.dev/api/query', { companies, captcha });
                     if (response.data.captchaRequired) {
                         setShowCaptcha(true);
                         setError('请输入验证码');
@@ -50,7 +50,7 @@
                         setResults(response.data.results);
                         setShowCaptcha(false);
                         setCaptcha('');
-                        const historyRes = await axios.get('https://business-query-worker.26935955.workers.dev//api/history');
+                        const historyRes = await axios.get('https://business-query-worker.26935955.workers.dev/api/history');
                         setHistory(historyRes.data);
                     }
                 } catch (err) {
