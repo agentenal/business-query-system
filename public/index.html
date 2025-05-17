@@ -5,19 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>工商信息查询系统</title>
-    <style>
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            font-size: 16px;
-        }
-    </style>
-    <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/babel-standalone@6.26.0/babel.min.js"></script>
-    <script src="https://unpkg.com/axios@1.7.2/dist/axios.min.js"></script>
-    <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/babel-standalone@6.26.0/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.7.2/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 
@@ -28,16 +20,13 @@
 
         const App = () => {
             const [query, setQuery] = useState('');
-            const [captcha, setCaptcha] = useState('');
-            const [captchaImage, setCaptchaImage] = useState('');
             const [results, setResults] = useState([]);
             const [history, setHistory] = useState([]);
             const [loading, setLoading] = useState(false);
             const [error, setError] = useState('');
-            const [showCaptcha, setShowCaptcha] = useState(false);
 
             useEffect(() => {
-                axios.get('https://business-query-worker.26935955.workers.dev/api/history')
+                axios.get('hhttps://business-query-worker.26935955.workers.dev/api/history')
                     .then(res => {
                         console.log('History response:', res.data);
                         setHistory(res.data);
@@ -58,49 +47,16 @@
                 setError('');
                 try {
                     const companies = query.split('\n').filter(name => name.trim());
-                    console.log('Sending query:', { companies, captcha });
-                    const response = await axios.post('https://business-query-worker.26935955.workers.dev/api/query', { companies, captcha });
+                    console.log('Sending query:', { companies });
+                    const response = await axios.post('hhttps://business-query-worker.26935955.workers.dev/api/query', { companies });
                     console.log('Query response:', response.data);
-                    if (response.data.captchaRequired) {
-                        setShowCaptcha(true);
-                        setCaptchaImage(response.data.captchaImage || '');
-                        setError(response.data.message || '请输入验证码。若图片未显示，请点击刷新或手动验证。');
-                    } else {
-                        setResults(response.data.results || []);
-                        setShowCaptcha(false);
-                        setCaptcha('');
-                        setCaptchaImage('');
-                        const historyRes = await axios.get('https://business-query-worker.26935955.workers.dev/api/history');
-                        setHistory(historyRes.data);
-                    }
+                    setResults(response.data.results || []);
+                    const historyRes = await axios.get('hhttps://business-query-worker.26935955.workers.dev/api/history');
+                    setHistory(historyRes.data);
                 } catch (err) {
                     const errMsg = (err.response && err.response.data && err.response.data.error) || err.message;
                     console.error('Query error:', errMsg);
-                    setError('查询失败: ' + errMsg + '。请尝试刷新验证码、稍后重试或在企查查官网手动验证。');
-                }
-                setLoading(false);
-            };
-
-            const refreshCaptcha = async () => {
-                setLoading(true);
-                setError('');
-                try {
-                    const companies = query.split('\n').filter(name => name.trim());
-                    console.log('Refreshing captcha for:', companies);
-                    const response = await axios.post('https://business-query-worker.26935955.workers.dev/api/query', {
-                        companies,
-                        captcha: '',
-                    });
-                    console.log('Captcha refresh response:', response.data);
-                    if (response.data.captchaRequired) {
-                        setShowCaptcha(true);
-                        setCaptchaImage(response.data.captchaImage || '');
-                        setError(response.data.message || '请输入新验证码。若图片仍未显示，请手动验证。');
-                    }
-                } catch (err) {
-                    const errMsg = (err.response && err.response.data && err.response.data.error) || err.message;
-                    console.error('Captcha refresh error:', errMsg);
-                    setError('刷新验证码失败: ' + errMsg + '。请稍后重试或手动验证。');
+                    setError('查询失败: ' + errMsg + '。请稍后重试或检查企查查官网。');
                 }
                 setLoading(false);
             };
@@ -123,135 +79,8 @@
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                         ></textarea>
-                        {showCaptcha && (
-                            <div className="mt-2">
-                                {captchaImage ? (
-                                    <img src={captchaImage} alt="验证码" className="mb-2 max-w-full h-auto" />
-                                ) : (
-                                    <p className="text-yellow-500 mb-2">
-                                        验证码图片未加载，请点击“刷新验证码”或
-                                        <a
-                                            href="https://www.qichacha.com"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-500 underline"
-                                        >
-                                            在企查查官网手动验证
-                                        </a>
-                                        后输入验证码。
-                                    </p>
-                                )}
-                                <input
-                                    className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="请输入验证码"
-                                    value={captcha}
-                                    onChange={e => setCaptcha(e.target.value)}
-                                />
-                                <div className="flex justify-between mt-2">
-                                    <button
-                                        className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 disabled:bg-gray-400"
-                                        onClick={refreshCaptcha}
-                                        disabled={loading}
-                                    >
-                                        刷新验证码
-                                    </button>
-                                    <button
-                                        className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:bg-gray-400"
-                                        onClick={handleQuery}
-                                        disabled={loading}
-                                    >
-                                        重试查询
-                                    </button>
-                                    <a
-                                        href="https://www.qichacha.com"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-500 underline self-center"
-                                    >
-                                        手动验证
-                                    </a>
-                                </div>
-                            </div>
-                        )}
                         <div className="flex justify-end mt-4">
                             <button
                                 className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
                                 onClick={handleQuery}
-                                disabled={loading}
-                            >
-                                {loading ? '查询中...' : '查询'}
-                            </button>
-                        </div>
-                        {error && <p className="text-red-500 mt-2">{error}</p>}
-                    </div>
-                    {results.length > 0 && (
-                        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-xl font-semibold">查询结果</h2>
-                                <button
-                                    className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
-                                    onClick={exportToExcel}
-                                >
-                                    导出Excel
-                                </button>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full table-auto">
-                                    <thead>
-                                        <tr className="bg-gray-200">
-                                            <th className="p-3">公司名称</th>
-                                            <th className="p-3">注册号</th>
-                                            <th className="p-3">法定代表人</th>
-                                            <th className="p-3">注册资本</th>
-                                            <th className="p-3">成立日期</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {results.map((item, index) => (
-                                            <tr key={index} className="border-t">
-                                                <td className="p-3">{item.name}</td>
-                                                <td className="p-3">{item.regNumber}</td>
-                                                <td className="p-3">{item.legalRep}</td>
-                                                <td className="p-3">{item.capital}</td>
-                                                <td className="p-3">{item.established}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-                    {history.length > 0 && (
-                        <div className="bg-white p-6 rounded-lg shadow-md">
-                            <h2 className="text-xl font-semibold mb-4">历史查询记录</h2>
-                            <div className="overflow-x-auto">
-                                <table className="w-full table-auto">
-                                    <thead>
-                                        <tr className="bg-gray-200">
-                                            <th className="p-3">查询时间</th>
-                                            <th className="p-3">公司名称</th>
-                                            <th className="p-3">注册号</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {history.map((item, index) => (
-                                            <tr key={index} className="border-t">
-                                                <td className="p-3">{new Date(item.timestamp).toLocaleString()}</td>
-                                                <td className="p-3">{item.name}</td>
-                                                <td className="p-3">{item.regNumber}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        ReactDOM.render(<App />, document.getElementById('root'));
-    </script>
-</body>
-
-</html>
+                                stanno cercando di fare qualcosa di nuovo e di interessante, ma non sono sicuro di come si svilupperà.
